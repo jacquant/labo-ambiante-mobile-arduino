@@ -1,3 +1,16 @@
+#include <SPI.h>
+#include <WiFi101.h>
+
+
+char ssid[] = "nomDuReseau";
+char pass[] = "motDePasse";
+int status = WL_IDLE_STATUS;
+WiFiClient client; //initialize the wifi client library
+
+char server[] = "www.aduino.cc";   //mettre l'addrese du serveur ici
+
+// partie non wifi
+
 int buttonPin = 1;
 int ledPin = 13;
 int soundPinDigi = 3;
@@ -67,4 +80,54 @@ void TurnOffAir(){
   onAir =0;
   digitalWrite(ledPin,LOW);
   return;
+}
+
+void wifiConnect(){
+  while(status != WL_CONNECTED){
+    Serial.print("Attempting to connect to WPA SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid,pass);
+    delay(1000);
+  }
+  Serial.println("connection established");
+}
+
+void printWifiStatus(){
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP address : ");
+  Serial.println(ip);
+
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI) :");
+  Serial.print(rssi);
+  Serial.print("  Dbm");
+}
+
+
+void httpRequest(){
+  String request;
+  if(onAir == 1){
+    request = "POST /... je passe en ligne HTTP/1.1";
+    }
+  else{
+    request = "POST/ ... je ne suis plus en ligne HTTP/1.1";
+  }
+
+  if(client.connect(server,80)){
+    Serial.println("connected to server");
+    Serial.println(request);
+    //token part etc
+    Serial.println("Authorization : Token *****");
+    Serial.println("Host : *****");
+    Serial.println("Connection : close");
+    Serial.println();
+  }
+  else{
+    Serial.println("connection to server failed");
+  }
+  
+  
 }
