@@ -1,38 +1,72 @@
+
 #include <SPI.h>
 #include <WiFi101.h>
+#include <ArduinoHttpClient.h>
+
+#include <NMEAGPS.h>
 
 
-char ssid[] = "nomDuReseau";
-char pass[] = "motDePasse";
+NMEAGPS gps;
+gps_fix fix;
+
+
+
+float lattitude;
+float longitude;
+
+
+//SoftwareSerial gpsSerial(rxGps,txGps);
+String stringGps = "";
+
+
+char ssid[] = "ricardo wifi";
+char pass[] = "Teafourtwo";
+
 int status = WL_IDLE_STATUS;
 WiFiClient client; //initialize the wifi client library
 
-char server[] = "www.aduino.cc";   //mettre l'addrese du serveur ici
+char server[] = "51.91.99.16";   //mettre l'addrese du serveur ici  possiblement rajouter :8181
+int port = 8181;
+
+HttpClient Http_client = HttpClient(client,server,port);
 
 // partie non wifi
 
-int buttonPin = 1;
-int ledPin = 13;
+int buttonPin = 2;
+int ledPin = 12;
 int soundPinDigi = 3;
+int soundPinAna = A0;
 int soundAlimPin = 5;
 
 int valDigi = 0;
+int valAna = 0;
 int buttonState = 0;
 
 int buttonPushed =0;
 int onAir =0;
 int lock =0;
 
+int soundLevel = 0;
+
 
 void setup() {
   pinMode(ledPin,OUTPUT);
   pinMode(buttonPin,INPUT);
   pinMode(soundPinDigi,INPUT);
+  pinMode(soundPinAna, INPUT);
   pinMode(soundAlimPin,OUTPUT);
 
-}
+  wifiConnect();
+
+
+
+  Serial.begin(9600);
+  }
+
 
 void loop() {
+  
+  
   buttonState = digitalRead(buttonPin);
   if(buttonState == LOW){
     buttonPushed = 1; 
@@ -50,20 +84,30 @@ void loop() {
     delay(200);
   }
   lock = 0;
+
 }
 
+
+
 //record sound in digital for a duration defined inside the variable duration
-void record(){ 
+void record(){
+  soundLevel =0; 
   digitalWrite(soundAlimPin,HIGH);
-  int duration = 50000;
+  int duration = 10000;
   while(duration > 0){
-    valDigi = digitalRead(soundPinDigi);
-    Serial.println(valDigi);
+    valAna = analogRead(soundPinAna);
+    Serial.println(valAna);
     duration = duration -1;
+    soundLevel = soundLevel + valAna;
   }
+  soundLevel = soundLevel/10000;
+  Serial.println("Le niveau moyen de son est :");
+  Serial.println(soundLevel);
   digitalWrite(soundAlimPin,LOW);
   return;
 }
+
+
 
 void TurnOnAir(){
   Serial.println("turned on air");
@@ -71,8 +115,17 @@ void TurnOnAir(){
   onAir =1;                     // on air activated => need to send http post
   digitalWrite(ledPin,HIGH);    //led on because on air
   record();
-  return;
-}
+
+  httpRequest_post();
+
+  //getGpsLocation();
+
+    return;
+  }
+  
+
+  
+
 
 void TurnOffAir(){
   Serial.println("turned off air");
@@ -107,27 +160,61 @@ void printWifiStatus(){
 }
 
 
-void httpRequest(){
-  String request;
-  if(onAir == 1){
-    request = "POST /... je passe en ligne HTTP/1.1";
-    }
-  else{
-    request = "POST/ ... je ne suis plus en ligne HTTP/1.1";
-  }
+void httpRequest_post(){
+  String postData = "{\"id\": \"Boitier\", \"title\": \"Bip boup je suis un arduino\", \"organizers\": \"Bip boup entertainment\", \"start_time\": \"none\",\"end_time\" : \"none\", \"description\": \"boop boop bap bip\", \"category\": \"electro\", \"zip_code\": \"5000\", \"city\": \"Namur\", \"street\": \"Grand Gagnage\", \"street_number\" : \"69\", \"phone\": \"118218\", \"mail\" : \"arduinono@bipboup.com\", \"website\" : \"bipboup.com\", \"lat\": 0.0, \"lon\" : 0.0, \"source\" : \"*****\", \"sound_level\" : 62}";
+  String contentType = "application/json";
 
-  if(client.connect(server,80)){
+  Serial.println("connecting to server ...");
+  
+  Http_client.post("/events",contentType,postData);
+  //Http_client.stop();
+  
+  int statusCode = Http_client.responseStatusCode();
+  String response = Http_client.responseBody();
+
+  Serial.print("Status code: ");
+  Serial.println(statusCode);
+  Serial.print("Response: ");
+  Serial.println(response);
+  
+  
+
+  /*if(client.connect(server,8181)){
     Serial.println("connected to server");
-    Serial.println(request);
-    //token part etc
-    Serial.println("Authorization : Token *****");
-    Serial.println("Host : *****");
-    Serial.println("Connection : close");
-    Serial.println();
+    
+    client.println("POST /events HTTP/1.1");
+    client.println("Host: vps747217.ovh.net");
+    client.println("User-Agent: Arduino/1.0");
+    client.println("Connection: close");
+    client.print("Content-Length: ");
+    client.println(postData.length());
+    client.println();
+    client.println(postData);
+
+    Serial.println("j'ai fini de faire ma requete POST");
+
+  
+    //Serial.println("Connection : close");
+    //Serial.println();
   }
   else{
     Serial.println("connection to server failed");
+  }*/
+}
+
+
+
+void getGpsLocation(){
+  Serial.println("getting location ...");
+  if(gps.available()){
+    fix = gps.read();
+    Serial.println(fix.latitude());
+  }
+  else{
+    delay(1000);
+    getGpsLocation();
   }
   
-  
 }
+
+  
