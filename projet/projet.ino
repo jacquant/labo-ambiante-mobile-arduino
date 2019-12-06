@@ -132,6 +132,7 @@ void TurnOffAir(){
   lock = 1;
   onAir =0;
   digitalWrite(ledPin,LOW);
+  httpRequest_delete();
   return;
 }
 
@@ -161,13 +162,13 @@ void printWifiStatus(){
 
 
 void httpRequest_post(){
-  String postData = "{\"id\": \"Boitier\", \"title\": \"Bip boup je suis un arduino\", \"organizers\": \"Bip boup entertainment\", \"start_time\": \"none\",\"end_time\" : \"none\", \"description\": \"boop boop bap bip\", \"category\": \"electro\", \"zip_code\": \"5000\", \"city\": \"Namur\", \"street\": \"Grand Gagnage\", \"street_number\" : \"69\", \"phone\": \"118218\", \"mail\" : \"arduinono@bipboup.com\", \"website\" : \"bipboup.com\", \"lat\": 0.0, \"lon\" : 0.0, \"source\" : \"*****\", \"sound_level\" : 62}";
+  String postData = "{\"id\": \"Boitier_1\", \"title\": \"Bip boup je suis un arduino\", \"organizers\": \"Bip boup entertainment\", \"start_time\": \"none\",\"end_time\" : \"none\", \"description\": \"boop boop bap bip\", \"category\": \"electro\", \"zip_code\": \"5000\", \"city\": \"Namur\", \"street\": \"Grand Gagnage\", \"street_number\" : \"69\", \"phone\": \"118218\", \"mail\" : \"arduinono@bipboup.com\", \"website\" : \"bipboup.com\", \"lat\": 0.0, \"lon\" : 0.0, \"source\" : \"*****\", \"sound_level\" : 62}";
   String contentType = "application/json";
 
   Serial.println("connecting to server ...");
   
   Http_client.post("/events",contentType,postData);
-  //Http_client.stop();
+
   
   int statusCode = Http_client.responseStatusCode();
   String response = Http_client.responseBody();
@@ -177,31 +178,28 @@ void httpRequest_post(){
   Serial.print("Response: ");
   Serial.println(response);
   
-  
-
-  /*if(client.connect(server,8181)){
-    Serial.println("connected to server");
-    
-    client.println("POST /events HTTP/1.1");
-    client.println("Host: vps747217.ovh.net");
-    client.println("User-Agent: Arduino/1.0");
-    client.println("Connection: close");
-    client.print("Content-Length: ");
-    client.println(postData.length());
-    client.println();
-    client.println(postData);
-
-    Serial.println("j'ai fini de faire ma requete POST");
-
-  
-    //Serial.println("Connection : close");
-    //Serial.println();
-  }
-  else{
-    Serial.println("connection to server failed");
-  }*/
+ 
 }
 
+void httpRequest_delete(){
+  String postData = "";
+  String contentType = "";
+
+  Serial.println("connecting to server ...");
+  
+  Http_client.del("/events/Boitier_1",contentType,postData);
+
+  
+  int statusCode = Http_client.responseStatusCode();
+  String response = Http_client.responseBody();
+
+  Serial.print("Status code: ");
+  Serial.println(statusCode);
+  Serial.print("Response: ");
+  Serial.println(response);
+  
+ 
+}
 
 
 void getGpsLocation(){
